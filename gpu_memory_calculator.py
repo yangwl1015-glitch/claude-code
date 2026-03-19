@@ -489,11 +489,101 @@ def print_report(estimate: MemoryEstimate, model_name: str, show_gpu_rec: bool =
 
 
 def list_models():
-    """列出所有预设模型"""
+    """列出所有预设模型，包含完整架构信息"""
     print("\n可用的预设模型：")
-    print("-" * 50)
-    for name, info in sorted(PRESET_MODELS.items()):
-        print(f"  {name:<20s}  {info['params_b']:>6.1f}B 参数")
+    header = (
+        f"  {'模型名称':<24s} {'参数量':>8s} {'Hidden':>7s} {'Layers':>7s} "
+        f"{'Heads':>6s} {'KV头':>5s} {'Vocab':>8s}"
+    )
+    print("=" * 78)
+    print(header)
+    print("-" * 78)
+
+    # 按系列分组展示
+    current_prefix = ""
+    for name in sorted(PRESET_MODELS.keys()):
+        info = PRESET_MODELS[name]
+        # 检测系列名变化，插入空行分隔
+        prefix = name.split("-")[0].rstrip("0123456789.")
+        if prefix != current_prefix and current_prefix != "":
+            print()
+        current_prefix = prefix
+
+        kv_h = info.get("kv_heads", info["heads"])
+        kv_str = str(kv_h) if kv_h != info["heads"] else "-"
+        params_str = f"{info['params_b']:.1f}B" if info['params_b'] >= 1 else f"{info['params_b']*1000:.0f}M"
+        print(
+            f"  {name:<24s} {params_str:>8s} {info['hidden']:>7d} {info['layers']:>7d} "
+            f"{info['heads']:>6d} {kv_str:>5s} {info['vocab']:>8d}"
+        )
+    print(f"\n  共 {len(PRESET_MODELS)} 个预设模型\n")
+
+
+def calc_all_models(precision: Precision, mode: str = "inference",
+                    batch_size: int = 1, seq_length: int = 2048,
+                    optimizer: str = "adam", gradient_checkpointing: bool = False):
+    """计算所有预设模型的显存需求，汇总表格输出"""
+    print(f"\n{'=' * 110}")
+    print(f"  全部模型显存估算 | 模式: {'推理' if mode == 'inference' else '训练'} | "
+          f"精度: {precision.label} | Batch: {batch_size} | 序列长度: {seq_length}"
+          + (f" | 优化器: {optimizer}" if mode == "train" else "")
+          + (" | 梯度检查点" if mode == "train" and gradient_checkpointing else ""))
+    print("=" * 110)
+
+    if mode == "train":
+        header = (
+            f"  {'模型':<24s} {'参数量':>7s} │ {'模型参数':>8s} {'梯度':>8s} "
+            f"{'优化器':>8s} {'KV Cache':>9s} {'激活值':>8s} │ {'总显存':>9s}"
+        )
+    else:
+        header = (
+            f"  {'模型':<24s} {'参数量':>7s} │ {'模型参数':>8s} "
+            f"{'KV Cache':>9s} {'激活值':>8s} │ {'总显存':>9s}"
+        )
+    print(header)
+    print("-" * 110)
+
+    current_prefix = ""
+    for name in sorted(PRESET_MODELS.keys()):
+        info = PRESET_MODELS[name]
+        prefix = name.split("-")[0].rstrip("0123456789.")
+        if prefix != current_prefix and current_prefix != "":
+            print()
+        current_prefix = prefix
+
+        kv_heads = info.get("kv_heads", None)
+        params_str = f"{info['params_b']:.1f}B" if info['params_b'] >= 1 else f"{info['params_b']*1000:.0f}M"
+
+        if mode == "train":
+            est = estimate_training_memory(
+                info["params_b"], info["hidden"], info["layers"], info["heads"],
+                precision, batch_size, seq_length, optimizer,
+                gradient_checkpointing, kv_heads,
+            )
+            print(
+                f"  {name:<24s} {params_str:>7s} │ "
+                f"{format_bytes(est.model_params_gb):>8s} "
+                f"{format_bytes(est.gradient_gb):>8s} "
+                f"{format_bytes(est.optimizer_gb):>8s} "
+                f"{format_bytes(est.kv_cache_gb):>9s} "
+                f"{format_bytes(est.activation_gb):>8s} │ "
+                f"{format_bytes(est.total_gb):>9s}"
+            )
+        else:
+            est = estimate_inference_memory(
+                info["params_b"], info["hidden"], info["layers"], info["heads"],
+                precision, batch_size, seq_length, kv_heads,
+            )
+            print(
+                f"  {name:<24s} {params_str:>7s} │ "
+                f"{format_bytes(est.model_params_gb):>8s} "
+                f"{format_bytes(est.kv_cache_gb):>9s} "
+                f"{format_bytes(est.activation_gb):>8s} │ "
+                f"{format_bytes(est.total_gb):>9s}"
+            )
+
+    print("=" * 110)
+    print(f"  共 {len(PRESET_MODELS)} 个模型 | 总显存含 ~0.5-1GB 额外开销(CUDA 上下文等)")
     print()
 
 
@@ -591,8 +681,14 @@ def main():
   python gpu_memory_calculator.py --params 13 --hidden 5120 --layers 40 --heads 40 \\
       --precision bf16 --mode train --batch-size 4 --optimizer adam
 
-  # 列出所有预设模型
+  # 列出所有预设模型（含架构详情）
   python gpu_memory_calculator.py --list-models
+
+  # 计算所有模型的推理显存（FP16）
+  python gpu_memory_calculator.py --calc-all --precision fp16
+
+  # 计算所有模型的训练显存（BF16 + Adam）
+  python gpu_memory_calculator.py --calc-all --precision bf16 --mode train --batch-size 4
 
   # 交互模式
   python gpu_memory_calculator.py --interactive
@@ -625,8 +721,9 @@ def main():
         help="优化器类型（默认 adam）",
     )
     parser.add_argument("--gradient-checkpointing", action="store_true", help="启用梯度检查点")
-    parser.add_argument("--list-models", action="store_true", help="列出所有预设模型")
+    parser.add_argument("--list-models", action="store_true", help="列出所有预设模型（含架构详情）")
     parser.add_argument("--list-gpus", action="store_true", help="列出所有 GPU 规格")
+    parser.add_argument("--calc-all", action="store_true", help="计算所有预设模型的显存需求")
     parser.add_argument("--interactive", action="store_true", help="交互模式")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式输出")
 
@@ -638,6 +735,18 @@ def main():
 
     if args.list_gpus:
         list_gpus()
+        return
+
+    if args.calc_all:
+        precision_map = {
+            "fp32": Precision.FP32, "fp16": Precision.FP16,
+            "bf16": Precision.BF16, "int8": Precision.INT8, "int4": Precision.INT4,
+        }
+        precision = precision_map[args.precision]
+        calc_all_models(
+            precision, args.mode, args.batch_size, args.seq_length,
+            args.optimizer, args.gradient_checkpointing,
+        )
         return
 
     if args.interactive:
