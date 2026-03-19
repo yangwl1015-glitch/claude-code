@@ -31,38 +31,173 @@ class Precision(Enum):
 
 
 # 常见模型预设参数（参数量单位：十亿/Billion）
+# 注：MoE 模型的 params_b 为总参数量，实际推理激活参数量见 active_params_b（如有）
 PRESET_MODELS = {
-    # LLaMA 系列
-    "llama-7b":   {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
-    "llama-13b":  {"params_b": 13,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 32000},
-    "llama-33b":  {"params_b": 33,   "hidden": 6656,  "layers": 60,  "heads": 52,  "vocab": 32000},
-    "llama-65b":  {"params_b": 65,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 32000},
+    # ==================== LLaMA 系列 ====================
+    # LLaMA 1
+    "llama-7b":     {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
+    "llama-13b":    {"params_b": 13,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 32000},
+    "llama-33b":    {"params_b": 33,   "hidden": 6656,  "layers": 60,  "heads": 52,  "vocab": 32000},
+    "llama-65b":    {"params_b": 65,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 32000},
     # LLaMA 2
-    "llama2-7b":  {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
-    "llama2-13b": {"params_b": 13,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 32000},
-    "llama2-70b": {"params_b": 70,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 32000},
+    "llama2-7b":    {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
+    "llama2-13b":   {"params_b": 13,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 32000},
+    "llama2-70b":   {"params_b": 70,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 32000, "kv_heads": 8},
     # LLaMA 3
-    "llama3-8b":  {"params_b": 8,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 128256},
-    "llama3-70b": {"params_b": 70.6, "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 128256},
-    # Qwen 系列
-    "qwen-7b":    {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 151936},
-    "qwen-14b":   {"params_b": 14,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 151936},
-    "qwen-72b":   {"params_b": 72,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 151936},
-    "qwen2.5-7b": {"params_b": 7,    "hidden": 3584,  "layers": 28,  "heads": 28,  "vocab": 151936},
-    "qwen2.5-72b":{"params_b": 72,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 151936},
-    # Mistral / Mixtral
-    "mistral-7b":   {"params_b": 7.3,  "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
-    "mixtral-8x7b": {"params_b": 46.7, "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
-    # ChatGLM
-    "chatglm3-6b":  {"params_b": 6.2,  "hidden": 4096,  "layers": 28,  "heads": 32,  "vocab": 65024},
-    # DeepSeek
-    "deepseek-7b":  {"params_b": 6.9,  "hidden": 4096,  "layers": 30,  "heads": 32,  "vocab": 102400},
-    "deepseek-67b": {"params_b": 67,   "hidden": 8192,  "layers": 95,  "heads": 64,  "vocab": 102400},
-    # GPT 系列（估计值）
-    "gpt2":       {"params_b": 0.117, "hidden": 768,   "layers": 12,  "heads": 12,  "vocab": 50257},
-    "gpt2-medium":{"params_b": 0.345, "hidden": 1024,  "layers": 24,  "heads": 16,  "vocab": 50257},
-    "gpt2-large": {"params_b": 0.774, "hidden": 1280,  "layers": 36,  "heads": 20,  "vocab": 50257},
-    "gpt2-xl":    {"params_b": 1.5,   "hidden": 1600,  "layers": 48,  "heads": 25,  "vocab": 50257},
+    "llama3-8b":    {"params_b": 8,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 128256, "kv_heads": 8},
+    "llama3-70b":   {"params_b": 70.6, "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 128256, "kv_heads": 8},
+    # LLaMA 3.1
+    "llama3.1-8b":  {"params_b": 8,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 128256, "kv_heads": 8},
+    "llama3.1-70b": {"params_b": 70.6, "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 128256, "kv_heads": 8},
+    "llama3.1-405b":{"params_b": 405,  "hidden": 16384, "layers": 126, "heads": 128, "vocab": 128256, "kv_heads": 8},
+    # LLaMA 3.2（轻量级）
+    "llama3.2-1b":  {"params_b": 1.24, "hidden": 2048,  "layers": 16,  "heads": 32,  "vocab": 128256, "kv_heads": 8},
+    "llama3.2-3b":  {"params_b": 3.21, "hidden": 3072,  "layers": 28,  "heads": 24,  "vocab": 128256, "kv_heads": 8},
+    # LLaMA 3.3
+    "llama3.3-70b": {"params_b": 70.6, "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 128256, "kv_heads": 8},
+
+    # ==================== Qwen 系列 ====================
+    # Qwen 1
+    "qwen-1.8b":    {"params_b": 1.8,  "hidden": 2048,  "layers": 24,  "heads": 16,  "vocab": 151936},
+    "qwen-7b":      {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 151936},
+    "qwen-14b":     {"params_b": 14,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 151936},
+    "qwen-72b":     {"params_b": 72,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 151936},
+    # Qwen 2
+    "qwen2-0.5b":   {"params_b": 0.5,  "hidden": 896,   "layers": 24,  "heads": 14,  "vocab": 151936, "kv_heads": 2},
+    "qwen2-1.5b":   {"params_b": 1.5,  "hidden": 1536,  "layers": 28,  "heads": 12,  "vocab": 151936, "kv_heads": 2},
+    "qwen2-7b":     {"params_b": 7,    "hidden": 3584,  "layers": 28,  "heads": 28,  "vocab": 151936, "kv_heads": 4},
+    "qwen2-72b":    {"params_b": 72,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 151936, "kv_heads": 8},
+    # Qwen 2.5
+    "qwen2.5-0.5b": {"params_b": 0.5,  "hidden": 896,   "layers": 24,  "heads": 14,  "vocab": 151936, "kv_heads": 2},
+    "qwen2.5-1.5b": {"params_b": 1.5,  "hidden": 1536,  "layers": 28,  "heads": 12,  "vocab": 151936, "kv_heads": 2},
+    "qwen2.5-3b":   {"params_b": 3,    "hidden": 2048,  "layers": 36,  "heads": 16,  "vocab": 151936, "kv_heads": 2},
+    "qwen2.5-7b":   {"params_b": 7,    "hidden": 3584,  "layers": 28,  "heads": 28,  "vocab": 151936, "kv_heads": 4},
+    "qwen2.5-14b":  {"params_b": 14,   "hidden": 5120,  "layers": 48,  "heads": 40,  "vocab": 151936, "kv_heads": 8},
+    "qwen2.5-32b":  {"params_b": 32,   "hidden": 5120,  "layers": 64,  "heads": 40,  "vocab": 151936, "kv_heads": 8},
+    "qwen2.5-72b":  {"params_b": 72,   "hidden": 8192,  "layers": 80,  "heads": 64,  "vocab": 151936, "kv_heads": 8},
+    # QwQ（推理模型）
+    "qwq-32b":      {"params_b": 32,   "hidden": 5120,  "layers": 64,  "heads": 40,  "vocab": 151936, "kv_heads": 8},
+
+    # ==================== DeepSeek 系列 ====================
+    "deepseek-7b":    {"params_b": 6.9,  "hidden": 4096,  "layers": 30,  "heads": 32,  "vocab": 102400},
+    "deepseek-67b":   {"params_b": 67,   "hidden": 8192,  "layers": 95,  "heads": 64,  "vocab": 102400},
+    "deepseek-v2-16b":{"params_b": 15.7, "hidden": 2048,  "layers": 27,  "heads": 16,  "vocab": 102400, "kv_heads": 2},
+    "deepseek-v2-236b":{"params_b": 236, "hidden": 5120,  "layers": 60,  "heads": 128, "vocab": 102400, "kv_heads": 2},
+    "deepseek-v3":    {"params_b": 671,  "hidden": 7168,  "layers": 61,  "heads": 128, "vocab": 129280, "kv_heads": 2},
+    "deepseek-r1":    {"params_b": 671,  "hidden": 7168,  "layers": 61,  "heads": 128, "vocab": 129280, "kv_heads": 2},
+    # DeepSeek R1 蒸馏系列
+    "deepseek-r1-1.5b": {"params_b": 1.5, "hidden": 1536, "layers": 28,  "heads": 12,  "vocab": 151936, "kv_heads": 2},
+    "deepseek-r1-7b":   {"params_b": 7,   "hidden": 3584, "layers": 28,  "heads": 28,  "vocab": 151936, "kv_heads": 4},
+    "deepseek-r1-8b":   {"params_b": 8,   "hidden": 4096, "layers": 32,  "heads": 32,  "vocab": 128256, "kv_heads": 8},
+    "deepseek-r1-14b":  {"params_b": 14,  "hidden": 5120, "layers": 48,  "heads": 40,  "vocab": 151936, "kv_heads": 8},
+    "deepseek-r1-32b":  {"params_b": 32,  "hidden": 5120, "layers": 64,  "heads": 40,  "vocab": 151936, "kv_heads": 8},
+    "deepseek-r1-70b":  {"params_b": 70.6,"hidden": 8192, "layers": 80,  "heads": 64,  "vocab": 128256, "kv_heads": 8},
+
+    # ==================== Mistral / Mixtral 系列 ====================
+    "mistral-7b":      {"params_b": 7.3,  "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000, "kv_heads": 8},
+    "mistral-nemo-12b":{"params_b": 12,   "hidden": 5120,  "layers": 40,  "heads": 32,  "vocab": 131072,"kv_heads": 8},
+    "mistral-small-24b":{"params_b": 24,  "hidden": 5120,  "layers": 40,  "heads": 32,  "vocab": 131072,"kv_heads": 8},
+    "mistral-large-123b":{"params_b": 123,"hidden": 12288, "layers": 88,  "heads": 96,  "vocab": 131072,"kv_heads": 8},
+    "mixtral-8x7b":    {"params_b": 46.7, "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000, "kv_heads": 8},
+    "mixtral-8x22b":   {"params_b": 141,  "hidden": 6144,  "layers": 56,  "heads": 48,  "vocab": 32768, "kv_heads": 8},
+
+    # ==================== Google Gemma 系列 ====================
+    "gemma-2b":     {"params_b": 2.5,  "hidden": 2048,  "layers": 18,  "heads": 8,   "vocab": 256000},
+    "gemma-7b":     {"params_b": 8.5,  "hidden": 3072,  "layers": 28,  "heads": 16,  "vocab": 256000},
+    "gemma2-2b":    {"params_b": 2.6,  "hidden": 2304,  "layers": 26,  "heads": 8,   "vocab": 256000, "kv_heads": 4},
+    "gemma2-9b":    {"params_b": 9.2,  "hidden": 3584,  "layers": 42,  "heads": 16,  "vocab": 256000, "kv_heads": 8},
+    "gemma2-27b":   {"params_b": 27.2, "hidden": 4608,  "layers": 46,  "heads": 32,  "vocab": 256000, "kv_heads": 16},
+    "gemma3-1b":    {"params_b": 1,    "hidden": 1152,  "layers": 26,  "heads": 8,   "vocab": 262144, "kv_heads": 4},
+    "gemma3-4b":    {"params_b": 4,    "hidden": 2560,  "layers": 34,  "heads": 8,   "vocab": 262144, "kv_heads": 4},
+    "gemma3-12b":   {"params_b": 12,   "hidden": 3840,  "layers": 48,  "heads": 16,  "vocab": 262144, "kv_heads": 8},
+    "gemma3-27b":   {"params_b": 27,   "hidden": 4608,  "layers": 62,  "heads": 32,  "vocab": 262144, "kv_heads": 16},
+
+    # ==================== Microsoft Phi 系列 ====================
+    "phi-2":        {"params_b": 2.7,  "hidden": 2560,  "layers": 32,  "heads": 32,  "vocab": 51200},
+    "phi-3-mini":   {"params_b": 3.8,  "hidden": 3072,  "layers": 32,  "heads": 32,  "vocab": 32064, "kv_heads": 8},
+    "phi-3-small":  {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 100352,"kv_heads": 8},
+    "phi-3-medium": {"params_b": 14,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 100352,"kv_heads": 10},
+    "phi-4":        {"params_b": 14,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 100352,"kv_heads": 10},
+
+    # ==================== Yi 系列（零一万物）====================
+    "yi-6b":        {"params_b": 6,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 64000, "kv_heads": 4},
+    "yi-9b":        {"params_b": 9,    "hidden": 4096,  "layers": 48,  "heads": 32,  "vocab": 64000, "kv_heads": 4},
+    "yi-34b":       {"params_b": 34,   "hidden": 7168,  "layers": 60,  "heads": 56,  "vocab": 64000, "kv_heads": 8},
+    "yi-1.5-6b":    {"params_b": 6,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 64000, "kv_heads": 4},
+    "yi-1.5-9b":    {"params_b": 9,    "hidden": 4096,  "layers": 48,  "heads": 32,  "vocab": 64000, "kv_heads": 4},
+    "yi-1.5-34b":   {"params_b": 34,   "hidden": 7168,  "layers": 60,  "heads": 56,  "vocab": 64000, "kv_heads": 8},
+
+    # ==================== 百川 Baichuan 系列 ====================
+    "baichuan-7b":    {"params_b": 7,   "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 64000},
+    "baichuan-13b":   {"params_b": 13,  "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 64000},
+    "baichuan2-7b":   {"params_b": 7,   "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 125696},
+    "baichuan2-13b":  {"params_b": 13,  "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 125696},
+
+    # ==================== InternLM 系列（书生浦语）====================
+    "internlm-7b":    {"params_b": 7,   "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 103168},
+    "internlm-20b":   {"params_b": 20,  "hidden": 5120,  "layers": 60,  "heads": 40,  "vocab": 103168},
+    "internlm2-1.8b": {"params_b": 1.8, "hidden": 2048,  "layers": 24,  "heads": 16,  "vocab": 92544, "kv_heads": 8},
+    "internlm2-7b":   {"params_b": 7,   "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 92544, "kv_heads": 8},
+    "internlm2-20b":  {"params_b": 20,  "hidden": 6144,  "layers": 48,  "heads": 48,  "vocab": 92544, "kv_heads": 8},
+    "internlm2.5-7b": {"params_b": 7,   "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 92544, "kv_heads": 8},
+
+    # ==================== ChatGLM / GLM 系列 ====================
+    "chatglm2-6b":   {"params_b": 6.2,  "hidden": 4096,  "layers": 28,  "heads": 32,  "vocab": 65024, "kv_heads": 2},
+    "chatglm3-6b":   {"params_b": 6.2,  "hidden": 4096,  "layers": 28,  "heads": 32,  "vocab": 65024, "kv_heads": 2},
+    "glm-4-9b":      {"params_b": 9,    "hidden": 4096,  "layers": 40,  "heads": 32,  "vocab": 151552,"kv_heads": 2},
+
+    # ==================== Falcon 系列 ====================
+    "falcon-7b":     {"params_b": 7,    "hidden": 4544,  "layers": 32,  "heads": 71,  "vocab": 65024, "kv_heads": 1},
+    "falcon-40b":    {"params_b": 40,   "hidden": 8192,  "layers": 60,  "heads": 128, "vocab": 65024, "kv_heads": 8},
+    "falcon-180b":   {"params_b": 180,  "hidden": 14848, "layers": 80,  "heads": 232, "vocab": 65024, "kv_heads": 8},
+
+    # ==================== BLOOM 系列 ====================
+    "bloom-560m":    {"params_b": 0.56, "hidden": 1024,  "layers": 24,  "heads": 16,  "vocab": 250880},
+    "bloom-1.7b":    {"params_b": 1.7,  "hidden": 2048,  "layers": 24,  "heads": 16,  "vocab": 250880},
+    "bloom-3b":      {"params_b": 3,    "hidden": 2560,  "layers": 30,  "heads": 32,  "vocab": 250880},
+    "bloom-7b":      {"params_b": 7.1,  "hidden": 4096,  "layers": 30,  "heads": 32,  "vocab": 250880},
+    "bloom-176b":    {"params_b": 176,  "hidden": 14336, "layers": 70,  "heads": 112, "vocab": 250880},
+
+    # ==================== StarCoder 系列 ====================
+    "starcoder":     {"params_b": 15.5, "hidden": 6144,  "layers": 40,  "heads": 48,  "vocab": 49152},
+    "starcoder2-3b": {"params_b": 3,    "hidden": 3072,  "layers": 30,  "heads": 24,  "vocab": 49152, "kv_heads": 2},
+    "starcoder2-7b": {"params_b": 7,    "hidden": 4608,  "layers": 32,  "heads": 36,  "vocab": 49152, "kv_heads": 4},
+    "starcoder2-15b":{"params_b": 15,   "hidden": 6144,  "layers": 40,  "heads": 48,  "vocab": 49152, "kv_heads": 4},
+
+    # ==================== Cohere Command R 系列 ====================
+    "command-r":     {"params_b": 35,   "hidden": 8192,  "layers": 40,  "heads": 64,  "vocab": 256000,"kv_heads": 8},
+    "command-r-plus":{"params_b": 104,  "hidden": 12288, "layers": 64,  "heads": 96,  "vocab": 256000,"kv_heads": 8},
+
+    # ==================== GPT 系列（开源/估计值）====================
+    "gpt2":          {"params_b": 0.117,"hidden": 768,   "layers": 12,  "heads": 12,  "vocab": 50257},
+    "gpt2-medium":   {"params_b": 0.345,"hidden": 1024,  "layers": 24,  "heads": 16,  "vocab": 50257},
+    "gpt2-large":    {"params_b": 0.774,"hidden": 1280,  "layers": 36,  "heads": 20,  "vocab": 50257},
+    "gpt2-xl":       {"params_b": 1.5,  "hidden": 1600,  "layers": 48,  "heads": 25,  "vocab": 50257},
+
+    # ==================== OLMo 系列 ====================
+    "olmo-1b":       {"params_b": 1.2,  "hidden": 2048,  "layers": 16,  "heads": 16,  "vocab": 50304},
+    "olmo-7b":       {"params_b": 6.9,  "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 50304},
+    "olmo-13b":      {"params_b": 13,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 50304},
+
+    # ==================== Mamba / 状态空间模型 ====================
+    "mamba-130m":    {"params_b": 0.13, "hidden": 768,   "layers": 24,  "heads": 1,   "vocab": 50280},
+    "mamba-370m":    {"params_b": 0.37, "hidden": 1024,  "layers": 48,  "heads": 1,   "vocab": 50280},
+    "mamba-1.4b":    {"params_b": 1.4,  "hidden": 2048,  "layers": 48,  "heads": 1,   "vocab": 50280},
+    "mamba-2.8b":    {"params_b": 2.8,  "hidden": 2560,  "layers": 64,  "heads": 1,   "vocab": 50280},
+
+    # ==================== RWKV 系列 ====================
+    "rwkv-3b":       {"params_b": 3,    "hidden": 2560,  "layers": 32,  "heads": 32,  "vocab": 65536},
+    "rwkv-7b":       {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 65536},
+    "rwkv-14b":      {"params_b": 14,   "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 65536},
+
+    # ==================== 其他知名模型 ====================
+    # Colossal-LLaMA
+    "colossalai-7b": {"params_b": 7,    "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 32000},
+    # MPT
+    "mpt-7b":        {"params_b": 6.7,  "hidden": 4096,  "layers": 32,  "heads": 32,  "vocab": 50432},
+    "mpt-30b":       {"params_b": 30,   "hidden": 7168,  "layers": 48,  "heads": 64,  "vocab": 50432},
+    # Cerebras
+    "cerebras-gpt-13b":{"params_b": 13, "hidden": 5120,  "layers": 40,  "heads": 40,  "vocab": 50257},
 }
 
 
@@ -240,27 +375,63 @@ def estimate_training_memory(
 
 # ========== 常见 GPU 显存规格 ==========
 GPU_SPECS = {
-    "RTX 3060":    12,
-    "RTX 3070":    8,
-    "RTX 3080":    10,
-    "RTX 3080Ti":  12,
-    "RTX 3090":    24,
-    "RTX 4060":    8,
-    "RTX 4060Ti":  16,
-    "RTX 4070":    12,
-    "RTX 4070Ti":  12,
-    "RTX 4080":    16,
-    "RTX 4090":    24,
-    "RTX 5090":    32,
-    "A100-40GB":   40,
-    "A100-80GB":   80,
-    "A800-80GB":   80,
-    "H100-80GB":   80,
-    "H800-80GB":   80,
-    "V100-16GB":   16,
-    "V100-32GB":   32,
-    "L40":         48,
-    "A6000":       48,
+    # NVIDIA GeForce 消费级
+    "RTX 3060":      12,
+    "RTX 3060Ti":    8,
+    "RTX 3070":      8,
+    "RTX 3070Ti":    8,
+    "RTX 3080":      10,
+    "RTX 3080Ti":    12,
+    "RTX 3090":      24,
+    "RTX 3090Ti":    24,
+    "RTX 4060":      8,
+    "RTX 4060Ti-8":  8,
+    "RTX 4060Ti-16": 16,
+    "RTX 4070":      12,
+    "RTX 4070Ti":    12,
+    "RTX 4070TiS":   16,
+    "RTX 4080":      16,
+    "RTX 4080S":     16,
+    "RTX 4090":      24,
+    "RTX 5070":      12,
+    "RTX 5070Ti":    16,
+    "RTX 5080":      16,
+    "RTX 5090":      32,
+    # NVIDIA 数据中心 / 专业级
+    "Tesla T4":      16,
+    "V100-16GB":     16,
+    "V100-32GB":     32,
+    "A10":           24,
+    "A30":           24,
+    "A40":           48,
+    "A100-40GB":     40,
+    "A100-80GB":     80,
+    "A800-80GB":     80,
+    "L4":            24,
+    "L20":           48,
+    "L40":           48,
+    "L40S":          48,
+    "A6000":         48,
+    "A6000Ada":      48,
+    "H100-80GB":     80,
+    "H100-NVL":      94,
+    "H200":          141,
+    "H800-80GB":     80,
+    "B100":          192,
+    "B200":          192,
+    "GB200":         384,
+    # AMD 数据中心
+    "MI210":         64,
+    "MI250":         128,
+    "MI300X":        192,
+    # Apple Silicon（统一内存参考）
+    "M1-Max":        64,
+    "M2-Ultra":      192,
+    "M3-Max":        128,
+    "M4-Max":        128,
+    # 华为昇腾
+    "Ascend 910B":   64,
+    "Ascend 910C":   128,
 }
 
 
@@ -484,6 +655,8 @@ def main():
         hidden = model["hidden"]
         layers = model["layers"]
         heads = model["heads"]
+        if args.kv_heads is None and "kv_heads" in model:
+            args.kv_heads = model["kv_heads"]
     elif args.params and args.hidden and args.layers and args.heads:
         model_name = f"custom-{args.params}B"
         params_b = args.params
