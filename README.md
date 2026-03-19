@@ -4,7 +4,8 @@
 
 ## 功能
 
-- 支持 20+ 常见开源模型预设（LLaMA、Qwen、Mistral、DeepSeek 等）
+- 支持 100+ 常见开源模型预设（LLaMA 1/2/3/3.1/3.2/3.3、Qwen 1/2/2.5、DeepSeek V2/V3/R1、Mistral/Mixtral、Gemma、Phi、Yi、百川、InternLM、ChatGLM/GLM-4、Falcon、BLOOM、StarCoder、Command R、OLMo、Mamba、RWKV 等）
+- 支持 50+ GPU 规格（NVIDIA GeForce/数据中心/专业级、AMD MI 系列、Apple Silicon、华为昇腾）
 - 支持多种精度：FP32、FP16/BF16、INT8、INT4
 - 推理模式：计算模型参数 + KV Cache + 激活值
 - 训练模式：额外计算梯度 + 优化器状态 + 激活值（支持梯度检查点）
